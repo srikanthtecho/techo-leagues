@@ -1,63 +1,64 @@
 package com.makeurpicks.service;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.makeurpicks.domain.League;
 import com.makeurpicks.domain.LeagueName;
 import com.makeurpicks.domain.PlayerLeague;
-import com.makeurpicks.exception.LeagueServerException;
+import com.makeurpicks.domain.PlayerLeagueId;
 import com.makeurpicks.exception.LeagueValidationException;
 import com.makeurpicks.exception.LeagueValidationException.LeagueExceptions;
 import com.makeurpicks.repository.LeagueRepository;
-import com.makeurpicks.repository.LeaguesAPlayHasJoinedRespository;
-import com.makeurpicks.repository.PlayersInLeagueRepository;
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.makeurpicks.repository.PlayerLeagueRepository;
+import com.makeurpicks.utils.HelperUtils;
 
 @Component
 public class LeagueService {
 
-	@Autowired
 	private LeagueRepository leagueRepository;
-
+	private PlayerLeagueRepository playerLeagueRepository;
 	@Autowired
-	private PlayersInLeagueRepository playersInLeagueRepository;
-
-	@Autowired
-	private LeaguesAPlayHasJoinedRespository leaguesPlayerHasJoinedRepository;
-	
+	public LeagueService(LeagueRepository leagueRepository,PlayerLeagueRepository playerLeagueRepository) {
+		this.leagueRepository=leagueRepository;
+		this.playerLeagueRepository=playerLeagueRepository;
+		
+	}
 	public League createLeague(League league) throws LeagueValidationException {
 		validateLeague(league);
-
-		
-		String id = UUID.randomUUID().toString();
-		
-		league.setId(id);
+		/*String id = UUID.randomUUID().toString();
+		league.set(id);*/
 		leagueRepository.save(league);
-
 		addPlayerToLeague(league, league.getAdminId());
-		
 		return league;
 	}
 
 	public League updateLeague(League league) throws LeagueValidationException {
 		validateLeague(league);
-
+		League leagueDS = leagueRepository.findOne(league.getId());
+		if (leagueDS == null)
+			throw new LeagueValidationException(LeagueExceptions.LEAGUE_NOT_FOUND);
 		leagueRepository.save(league);
-		
 		return league;
 	}
 
 	public Set<LeagueName> getLeaguesForPlayer(String playerId) throws LeagueValidationException {
-		return leaguesPlayerHasJoinedRepository.findOne(playerId).getLeauges();
-		
+		List<String> leagueIds = playerLeagueRepository.findIdLeagueIdsByIdPlayerId(playerId);
+		if(leagueIds==null||leagueIds.size()==0) {
+			return new HashSet<LeagueName>();
+		}
+		List<League> leagues = leagueRepository.findAll(leagueIds);
+		return HelperUtils.getLeagueNameFromLeagues(leagues);
 	}
 	
 	public Set<String> getPlayersInLeague(String leagueid) throws LeagueValidationException {
-		return playersInLeagueRepository.findOne(leagueid).getPlayers();
+		 return new HashSet<String> (playerLeagueRepository.findIdPlayerIdsByIdLeagueId(leagueid));
 		
 	}
 
@@ -79,36 +80,46 @@ public class LeagueService {
 		}
 		
 		joinLeague(playerLeague.getLeagueId(), playerLeague.getPlayerId(), playerLeague.getPassword());
+	
 	}
 
 	protected void joinLeague(String leagueId, String playerId, String password) throws LeagueValidationException {
-		
-//		if (!isValidPlayer(playerId))
-//			throw new LeagueValidationException(LeagueExceptions.PLAYER_NOT_FOUND);
-		
+
+		// if (!isValidPlayer(playerId))
+		// throw new
+		// LeagueValidationException(LeagueExceptions.PLAYER_NOT_FOUND);
+
 		League league = leagueRepository.findOne(leagueId);
 		if (league == null)
 			throw new LeagueValidationException(LeagueExceptions.LEAGUE_NOT_FOUND);
-		
-		if (league.getPassword()!=null&&!"".equals(league.getPassword())&& !league.getPassword().equals(password))
+
+		if (league.getPassword() != null && !"".equals(league.getPassword()) && !league.getPassword().equals(password))
 			throw new LeagueValidationException(LeagueExceptions.INVALID_LEAGUE_PASSWORD);
-		
+
 		addPlayerToLeague(league, playerId);
 
 	}
 	
-	protected void addPlayerToLeague(League league, String playerId)
+	 PlayerLeague addPlayerToLeague(League league, String playerId)
 	{
-//		PlayerResponse playerResponse = getPlayer(playerId);
-		playersInLeagueRepository.addPlayerToLeague(playerId, league.getId());
-		leaguesPlayerHasJoinedRepository.addPlayerToLeague(league, playerId);
+		//TODO: need to create playerleague builder
+		PlayerLeague playerLeague = new PlayerLeague(new PlayerLeagueId(league.getId(),playerId));
+		playerLeague.setLeagueId(league.getId());
+		playerLeague.setLeagueName(league.getLeagueName());
+		playerLeague.setPassword(league.getPassword());
+		playerLeague.setPlayerId(playerId);
+		return playerLeagueRepository.save(playerLeague);
 	}
 
 	public League getLeagueById(String leagueId) {
 		return leagueRepository.findOne(leagueId);
 	}
+	
+	public League getLeagueByName(String leagueName) {
+		return leagueRepository.findByLeagueName(leagueName);
+	}
 
-	public League getLeagueByName(String name) {
+	/*public League getLeagueByName(String name) {
 		Iterable<League> leagues = leagueRepository.findAll();
 		for (League league:leagues)
 		{
@@ -117,18 +128,18 @@ public class LeagueService {
 		}
 		
 		return null;
-	}
+	}*/
 
-	public void removePlayerFromLeagye(String leagueId, String playerId) {
-		League league = leagueRepository.findOne(leagueId);
+	public void removePlayerFromLeague(String leagueId, String playerId) {
+		League league = getLeagueById(leagueId);
 		if (league == null)
 			throw new LeagueValidationException(LeagueExceptions.LEAGUE_NOT_FOUND);
+		PlayerLeague playerLeague = playerLeagueRepository.findByIdLeagueIdAndIdPlayerId(league.getId(),playerId);
+		if(playerLeague!=null)
+			playerLeagueRepository.delete(playerLeague);
 		
-//		PlayerResponse playerResponse = getPlayer(playerId);
-		playersInLeagueRepository.delete(league.getId());
-		leaguesPlayerHasJoinedRepository.delete(league.getId());
 	}
-
+	
 	/*
 	 * 
 	 * 
@@ -140,11 +151,10 @@ public class LeagueService {
 		if (getLeagueByName(league.getLeagueName()) != null)
 			throw new LeagueValidationException(
 					LeagueExceptions.LEAGUE_NAME_IN_USE);
-		if (league.getSeasonId().isEmpty())
+		if (league.getSeasonId()==null||league.getSeasonId().isEmpty())
 			throw new LeagueValidationException(
 					LeagueExceptions.SEASON_ID_IS_NULL);
-
-		if (league.getAdminId().isEmpty())
+		if (league.getAdminId()==null || league.getAdminId().isEmpty())
 			throw new LeagueValidationException(
 					LeagueExceptions.ADMIN_NOT_FOUND);
 
@@ -154,7 +164,7 @@ public class LeagueService {
 	}
 
 	private boolean isLeagueValid(String leagueId) {
-		League league = leagueRepository.findOne(leagueId);
+		League league = getLeagueById(leagueId);
 		if (league == null)
 			return false;
 		else
@@ -206,9 +216,13 @@ public class LeagueService {
 		Set<String> playerIds = getPlayersInLeague(leagueId);
 		for (String playerId:playerIds)
 		{
-			try {removePlayerFromLeagye(leagueId, playerId);} catch (Exception e) {e.getMessage();}
+			try {removePlayerFromLeague(leagueId, playerId);} catch (Exception e) {e.getMessage();}
 		}
 		
 		leagueRepository.delete(leagueId);
 	}
+	public List<League> getLeagueBySeasonId(String seasonId) {
+		return leagueRepository.findLeagueBySeasonId(seasonId);
+	}
+	
 }

@@ -1,23 +1,38 @@
 package com.makeurpicks.domain;
 
-public class PlayerLeague extends AbstractModel {
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
-	private String leagueId;
+@Entity
+public class PlayerLeague  {
+	@EmbeddedId
+	private PlayerLeagueId id;
 	private String leagueName;
-	private String playerId;
 	private String password;
-	
+	private PlayerLeague() {}
+	public PlayerLeague(PlayerLeagueId playerLeagueId) {
+		id = playerLeagueId;
+	}
 	public String getLeagueId() {
-		return leagueId;
+		return id.getLeagueId();
 	}
 	public void setLeagueId(String leagueId) {
-		this.leagueId = leagueId;
+		this.id.setLeagueId(leagueId); 
+	}
+	public PlayerLeagueId getId() {
+		return id;
+	}
+	public void setId(PlayerLeagueId id) {
+		this.id = id;
 	}
 	public String getPlayerId() {
-		return playerId;
+		return id.getPlayerId();
 	}
 	public void setPlayerId(String playerId) {
-		this.playerId = playerId;
+		this.id.setPlayerId(playerId);
 	}
 	public String getPassword() {
 		return password;
