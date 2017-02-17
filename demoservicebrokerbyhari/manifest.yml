@@ -1,9 +1,0 @@
----
-applications:
-  - name: simpleservicebrokerbyhari
-    buildpack: java_buildpack
-    host: simpleservicebrokerbyhari
-    path: target/simpleservicebrokerbyhari-0.0.1-SNAPSHOT.jar
-    memory: 256M
-    #services:
-    #  - mysql
