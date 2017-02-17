@@ -1,0 +1,7 @@
+server.port: 9898
+hashbroker:
+  uri: ${vcap.services.3techohashmap1feb22017[0].credentials.uri:http://techolution-service-broker.apps.techolution.com/TechoHash/}
+  bindingid: ${vcap.services.techohashmap1feb22017[0].credentials.bindingId:fca88d92-dc37-4798-a836-45708b6cbdc7c58905a6-acb6-4aec-9b30-15eb1a05b113}
+  username: ${vcap.services.techohashmap1feb22017[0].credentials.username:dinesh}
+  password: ${vcap.services.techohashmap1feb22017[0].credentials.password:dinesh}
+  

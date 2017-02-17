@@ -1,0 +1,10 @@
+---
+applications:
+- name: hashclient
+  memory: 512M
+  instances: 1
+  host: techohashclient
+  path: ./target/hashclient-0.0.1-SNAPSHOT.jar
+  services:
+  - 22client2017
+  

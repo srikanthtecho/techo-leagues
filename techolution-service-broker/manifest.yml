@@ -1,0 +1,7 @@
+---
+applications:
+- name: hashbroker210
+  memory: 512M 
+  instances: 1
+  host: techolution-service-broker
+  path: ./target/hashservicebroker-0.0.1-SNAPSHOT.jar
