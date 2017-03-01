@@ -21,10 +21,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.boot.test.SpringApplicationConfiguration;
 
-import com.makeurpicks.LeagueApplication;
 import com.makeurpicks.domain.League;
+import com.makeurpicks.domain.LeagueName;
 import com.makeurpicks.domain.PlayerLeague;
 import com.makeurpicks.domain.PlayerLeagueId;
 import com.makeurpicks.exception.LeagueValidationException;
@@ -33,7 +32,6 @@ import com.makeurpicks.repository.LeagueRepository;
 import com.makeurpicks.repository.PlayerLeagueRepository;
 
 @RunWith(MockitoJUnitRunner.class)
-@SpringApplicationConfiguration(classes = LeagueApplication.class)
 public class LeagueServiceTest {
 
 	@Mock
@@ -58,21 +56,72 @@ public class LeagueServiceTest {
 		return league;
 	}
 
-	@Test(expected = NullPointerException.class)
+	private PlayerLeague generatePlayerLeague() {
+		PlayerLeagueId playerLeagueId = new PlayerLeagueId("leagueId", "playerId");
+		PlayerLeague playerLeague = new PlayerLeague(playerLeagueId);
+		return playerLeague;
+	}
+
+	@Test
+	public void validateLeagueTest_LeagueNameNull() {
+		expectedExp.expect(LeagueValidationException.class);
+		League league = new League();
+		league.setLeagueName("");
+		leagueService.validateLeague(league);
+		expectedExp.expectMessage(LeagueExceptions.LEAGUE_NAME_IS_NULL.toString());
+	}
+
+	@Test
+	public void validateLeagueTest_LeagueNameInUse() {
+		expectedExp.expect(LeagueValidationException.class);
+		League league = new League();
+		league.setLeagueName("a");
+		when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(new League());
+		leagueService.validateLeague(league);
+		expectedExp.expectMessage(LeagueExceptions.LEAGUE_NAME_IN_USE.toString());
+	}
+
+	@Test
+	public void validateLeagueTest_SeasonIdNull() {
+		expectedExp.expect(LeagueValidationException.class);
+		League league = new League();
+		league.setLeagueName("a");
+		league.setSeasonId(null);
+		when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(null);
+		leagueService.validateLeague(league);
+		expectedExp.expectMessage(LeagueExceptions.SEASON_ID_IS_NULL.toString());
+	}
+
+	@Test
+	public void validateLeagueTest_AdminIdNull() {
+		expectedExp.expect(LeagueValidationException.class);
+		League league = new League();
+		league.setLeagueName("a");
+		league.setSeasonId("a");
+		league.setAdminId(null);
+		when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(null);
+		leagueService.validateLeague(league);
+		expectedExp.expectMessage(LeagueExceptions.ADMIN_NOT_FOUND.toString());
+	}
+
+	@Test
 	public void createLeagueTest_leagueNull() {
+		expectedExp.expect(NullPointerException.class);
 		leagueService.createLeague(null);
 	}
 
-	@Test(expected = LeagueValidationException.class)
+	@Test
 	public void createLeagueTest_LeagueNameNull() {
+		expectedExp.expect(LeagueValidationException.class);
 		League league = new League();
 		league.setId(UUID.randomUUID().toString());
 		leagueService.createLeague(league);
 		expectedExp.expectMessage(LeagueExceptions.LEAGUE_NAME_IS_NULL.toString());
 	}
 
-	@Test(expected = LeagueValidationException.class)
+	@Test
 	public void createLeagueTest_SeasonIdNull() {
+		expectedExp.expect(LeagueValidationException.class);
 		League league = new League();
 		league.setId(UUID.randomUUID().toString());
 		league.setLeagueName("aa");
@@ -80,8 +129,9 @@ public class LeagueServiceTest {
 		expectedExp.expectMessage(LeagueExceptions.SEASON_ID_IS_NULL.toString());
 	}
 
-	@Test(expected = LeagueValidationException.class)
+	@Test
 	public void createLeagueTest_AdminIdNull() {
+		expectedExp.expect(LeagueValidationException.class);
 		League league = new League();
 		league.setId(UUID.randomUUID().toString());
 		league.setLeagueName("aa");
@@ -91,13 +141,15 @@ public class LeagueServiceTest {
 		expectedExp.expectMessage(LeagueExceptions.ADMIN_NOT_FOUND.toString());
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void updateLeagueTest_leagueNull() {
+		expectedExp.expect(NullPointerException.class);
 		leagueService.updateLeague(null);
 	}
 
-	@Test(expected = LeagueValidationException.class)
+	@Test
 	public void updateLeagueTest_LeagueNotFound() {
+		expectedExp.expect(LeagueValidationException.class);
 		League league = generateLeague();
 		when(leagueRepositoryMock.findOne(anyString())).thenReturn(null);
 		leagueService.updateLeague(league);
@@ -114,7 +166,7 @@ public class LeagueServiceTest {
 
 	@Test
 	public void getLeaguesForPlayerTest_PlayerIdNull() {
-		Set ret = leagueService.getLeaguesForPlayer(null);
+		Set<LeagueName> ret = leagueService.getLeaguesForPlayer(null);
 		assertThat(ret.size() == 0);
 	}
 
@@ -134,14 +186,53 @@ public class LeagueServiceTest {
 		assertThat(players.size() == 0);
 	}
 
-	@Test(expected = LeagueValidationException.class)
+	@SuppressWarnings("unchecked")
+	@Test
+	public void joinLeagueTest_InvalidPassword() {
+		expectedExp.expect(LeagueValidationException.class);
+		PlayerLeague playerLeague = generatePlayerLeague();
+		League league = generateLeague();
+		when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
+		when(playerLeagueRepositoryMock.save(anyList())).thenReturn(anyObject());
+		leagueService.joinLeague(playerLeague);
+		expectedExp.expectMessage(LeagueExceptions.INVALID_LEAGUE_PASSWORD.toString());
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void joinLeagueTest_LeagueIdLeagueNameNull() {
+		expectedExp.expect(LeagueValidationException.class);
+		PlayerLeague playerLeague = generatePlayerLeague();
+		League league = generateLeague();
+		league.setId(null);
+		league.setLeagueName(null);
+		when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
+		when(playerLeagueRepositoryMock.save(anyList())).thenReturn(anyObject());
+		leagueService.joinLeague(playerLeague);
+		expectedExp.expectMessage(LeagueExceptions.LEAGUE_NOT_FOUND.toString());
+	}
+
+	@Test
+	public void joinLeagueTest_LeagueIdNull() {
+		expectedExp.expect(LeagueValidationException.class);
+		PlayerLeague playerLeague = generatePlayerLeague();
+		League league = generateLeague();
+		league.setId(null);
+		when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(anyObject());
+		leagueService.joinLeague(playerLeague);
+		expectedExp.expectMessage(LeagueExceptions.LEAGUE_NOT_FOUND.toString());
+	}
+
+	@Test
 	public void joinLeagueTest_NullLeague() {
+		expectedExp.expect(LeagueValidationException.class);
 		League league = generateLeague();
 		when(leagueRepositoryMock.findOne(anyString())).thenReturn(null);
 		leagueService.joinLeague(league.getId(), "PlayerId", league.getPassword());
 		expectedExp.expectMessage(LeagueExceptions.LEAGUE_NOT_FOUND.toString());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void joinLeagueTest_Save() {
 		League league = generateLeague();
@@ -160,8 +251,9 @@ public class LeagueServiceTest {
 		assertNull(leagueService.getLeagueByName("x"));
 	}
 
-	@Test(expected = LeagueValidationException.class)
+	@Test
 	public void removePlayerFromLeagueTest_InvalidLeague() {
+		expectedExp.expect(LeagueValidationException.class);
 		when(leagueService.getLeagueById(null)).thenReturn(null);
 		leagueService.removePlayerFromLeague(null, null);
 		expectedExp.expectMessage(LeagueExceptions.LEAGUE_NOT_FOUND.toString());
@@ -180,22 +272,13 @@ public class LeagueServiceTest {
 		verify(playerLeagueRepositoryMock).delete(playerLeague);
 	}
 
-	// TODO : Do we have to create test for private and protected methods like
-	// below ?
-	/*
-	 * @Test public void isLeagueValidTest_InvalidLeagueId(){
-	 * when(leagueRepositoryMock.findOne(anyString())).thenReturn(null);
-	 * assertEquals(false, leagueService.isLeagueValid("a"));
-	 * 
-	 * }
-	 */
-
 	@Test
 	public void getAllLeaguesTest() {
 		Iterable<League> list = leagueService.getAllLeagues();
 		assertNotNull(list);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void deleteLeagueTest_InvalidLeagueId() {
 		when(playerLeagueRepositoryMock.findIdPlayerIdsByIdLeagueId(anyString())).thenReturn(anyList());
@@ -204,6 +287,7 @@ public class LeagueServiceTest {
 		verify(leagueRepositoryMock).delete("x");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void deleteLeagueTest_ValidLeagueId() {
 		League league = generateLeague();
@@ -219,6 +303,7 @@ public class LeagueServiceTest {
 		assertNull(leagueService.getLeagueBySeasonId(null));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void getLeagueBySeasonIdTest_ValidSeasonId() {
 		when(leagueRepositoryMock.findLeagueBySeasonId(anyString())).thenReturn(anyList());
