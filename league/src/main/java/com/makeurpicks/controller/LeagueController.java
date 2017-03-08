@@ -22,6 +22,8 @@ import com.makeurpicks.domain.LeagueType;
 import com.makeurpicks.domain.PlayerLeague;
 import com.makeurpicks.service.LeagueService;
 
+import io.swagger.annotations.ApiOperation;
+
 @RestController
 @RequestMapping(value = "")
 public class LeagueController {
@@ -43,7 +45,7 @@ public class LeagueController {
 		return leagueService.getAllLeagues();
 
 	}
-	
+	@ApiOperation(value = "getLeagueTypes", nickname = "getLeagueTypes")
 	@RequestMapping(method = RequestMethod.GET, value = "/types")
 	public @ResponseBody LeagueType[] getLeagueTypes() {
 		return LeagueType.values();
