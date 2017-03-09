@@ -17,14 +17,15 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 public class SwagerConfig {
 	@Bean
 	public Docket api() {
-		return new Docket(DocumentationType.SWAGGER_2).select().apis(RequestHandlerSelectors.basePackage("com.makeurpicks.controller"))
-				.paths(PathSelectors.any()).build().apiInfo(apiInfo());
+		return new Docket(DocumentationType.SWAGGER_2).select()
+				.apis(RequestHandlerSelectors.basePackage("com.makeurpicks.controller")).paths(PathSelectors.any())
+				.build().apiInfo(apiInfo());
 	}
 
 	private ApiInfo apiInfo() {
-		return new ApiInfoBuilder().title("Test with Swagger API").description("Rest Security with Swagger")
+		return new ApiInfoBuilder().title("League Microservices APIs").description("League Microservices Endpoints.")
 				.termsOfServiceUrl("https://www.techolution.com")
-				.contact(new Contact("Fahad Ahmed", "www.techoution.com", "tech@techolution.com"))
-				.title("Test League APIs").version("2.0").build();
+				.contact(new Contact("Fahad Ahmed", "www.techoution.com", "fahad.ahmed@techolution.com"))
+				.title("League Microservices APIs").version("2.5.0").build();
 	}
 }
