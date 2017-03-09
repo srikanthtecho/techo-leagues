@@ -14,8 +14,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 
 @SpringBootApplication
-@EnableEurekaClient
-@EnableResourceServer
+//@EnableEurekaClient
+//@EnableResourceServer
 public class LeagueApplication {
 
 	public static void main(String[] args) {
@@ -29,8 +29,10 @@ public class LeagueApplication {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
-			http.authorizeRequests().anyRequest().authenticated().and().sessionManagement()
-					.sessionCreationPolicy(SessionCreationPolicy.NEVER);
+			/*http.authorizeRequests().anyRequest().authenticated().and().sessionManagement()
+					.sessionCreationPolicy(SessionCreationPolicy.NEVER);*/
+			http.authorizeRequests().anyRequest().permitAll().and().sessionManagement()
+			.sessionCreationPolicy(SessionCreationPolicy.NEVER);
 		}
 
 		@Override
