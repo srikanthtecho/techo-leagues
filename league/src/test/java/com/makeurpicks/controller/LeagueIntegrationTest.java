@@ -67,19 +67,9 @@ public class LeagueIntegrationTest {
 	 @Autowired
 	 LeagueController leagueController;
 	 
-	// @Transactional(propagation=Propagation.REQUIRED)  //This method will have its own transaction scope and will be rolled back after that
+	
 	 @Test
-	// @Commit
-	 /*
-	   IT IS REQUIRED TO USE SQLCONFIG BECAUSE, WITHOUT THAT DATA IS NOT GETTING COMMITED. SINCE WE CALL REST URL, THAT HAS
-	 ITS OWN EXECUTION PATH AND IF THE DATA HERE IS NOT COMMITED, THE SERVICE INSTANCE MIGHT NOT SEE IT AS THE SCOPE WILL BE READ_COMMITED
-	 HENCE COMMITING IMMEDIATELY AFTER INSERT AND DELETE
-	 */
-/*	 @SqlGroup({
-			@Sql(scripts = "populateLeagueTableTest.sql", executionPhase = org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD,config=@SqlConfig(transactionMode = TransactionMode.ISOLATED) ),
-			@Sql(scripts = "rollBackLeagueTableTest.sql", executionPhase = org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD,config=@SqlConfig(transactionMode = TransactionMode.ISOLATED) )
-			})*/
-	 public void getLeagueById_validLeagueURL_success(){
+	public void getLeagueById_validLeagueURL_success(){
 		 TestRestTemplate testRestTemplate=new TestRestTemplate();
 		 //RestTemplate testRestTemplate=new RestTemplate();
 		 ResponseEntity<League> response=testRestTemplate.getForEntity("http://localhost:8081/leagues/1234567/", League.class);
@@ -117,19 +107,8 @@ public class LeagueIntegrationTest {
 		 return league;
 	}
 	 
-	/* @Bean(name={"testRestTemplate"})
-	public TestRestTemplate testRestTemplate() {
-			return new TestRestTemplate();
-		}
-*/
-	 
-	 //@Transactional(propagation=Propagation.REQUIRED)  //This method will have its own transaction scope and will be rolled back after that
+	
 	 @Test
-	 //COMMENTED OUT POST EXECUTION AS THE TRANSACTION GETS ROLLEDBACK
-	/* @SqlGroup({
-			@Sql(scripts = "populateLeagueTableTest.sql", executionPhase = org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-		//	@Sql(scripts = "rollBackLeagueTableTest.sql", executionPhase = org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD )
-			})*/
 	 public void getLeagueById_validLeagueController_success(){
 		 
 		 League league=leagueController.getLeagueById("1234567");
