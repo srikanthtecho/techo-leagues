@@ -1,19 +1,13 @@
 node {
-	echo 'Hello world'
-	
 	stage ('Build') {
-
-    git url: 'https://github.com/Techolution/techo-leagues'
-
-    withMaven(
-        maven: 'M3',
-        mavenSettingsConfig: 'my-maven-settings', // Maven settings.xml file defined with the Jenkins Config File Provider Plugin
-        mavenLocalRepo: '.repository') {
-
-      // Run the maven build
-      echo 'start'
-      sh "mvn clean install"
-      echo 'End'
-    } // withMaven will discover the generated Maven artifacts, JUnit reports and FindBugs reports
-  }
+		steps {
+                echo 'Building..'
+                sh 'mvn --version'
+        }
+  	}
+  	stage('Test') {
+            steps {
+                echo 'Testing..'
+            }
+    }
 }
