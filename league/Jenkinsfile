@@ -1,9 +1,15 @@
 node {
 	stage ('Build') {
-                echo 'Building..'
-              //  sh 'mvn --version'
+       echo 'Building..'
+       withMaven(
+        maven: 'M3',
+        mavenSettingsConfig: 'my-maven-settings',
+        mavenLocalRepo: '.repository') {
+      	sh 'mvn --version'
+    	}
   	}
+  	
   	stage('Test') {
-                echo 'Testing..'
+        echo 'Testing..'
     }
 }
