@@ -3,15 +3,17 @@ node {
 	
 	stage ('Build') {
 
-    //git url: 'https://github.com/Techolution/techo-leagues.git'
+    //git url: 'https://github.com/Techolution/techo-leagues/tree/feature/swagger/fahad'
 
     withMaven(
         maven: 'M3',
-        mavenSettingsConfig: 'my-maven-settings',
+        mavenSettingsConfig: 'my-maven-settings', // Maven settings.xml file defined with the Jenkins Config File Provider Plugin
         mavenLocalRepo: '.repository') {
-        echo 'Starting Build!'
-      	sh "mvn clean install"
-      	echo 'Build Complete!'
-    	} 
-  	}
+
+      // Run the maven build
+      echo 'start'
+      sh "mvn clean install"
+      echo 'End'
+    } // withMaven will discover the generated Maven artifacts, JUnit reports and FindBugs reports
+  }
 }
