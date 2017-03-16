@@ -3,7 +3,7 @@ node {
 	
 	stage ('Build') {
 
-    //git url: 'https://github.com/Techolution/techo-leagues/tree/feature/swagger/fahad'
+    git url: 'https://github.com/Techolution/techo-leagues'
 
     withMaven(
         maven: 'M3',
