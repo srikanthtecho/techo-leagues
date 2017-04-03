@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.springframework.boot.test.context.SpringBootTest;
@@ -67,7 +68,7 @@ public class LeagueServiceTest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     @Test
-    public void testValidateLeagueWhenLeagueNameIsNull() {
+    public void validateLeague_whenLeagueNameIsNull_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.LEAGUE_NAME_IS_NULL.name());
         league = getValidLeague();
@@ -76,7 +77,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testValidateLeagueWhenLeagueNameIsEmpty() {
+    public void validateLeague_whenLeagueNameIsEmpty_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.LEAGUE_NAME_IS_NULL.name());
         league = getValidLeague();
@@ -85,7 +86,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testValidateLeagueWhenLeagueNameIsInUse() {
+    public void validateLeague_whenLeagueNameInUse_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.LEAGUE_NAME_IN_USE.name());
         league = getValidLeague();
@@ -94,7 +95,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testValidateLeagueWhenSeasonIdIsNull() {
+    public void validateLeague_whenSeasonIdIsNull_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.SEASON_ID_IS_NULL.name());
         league = getValidLeague();
@@ -103,7 +104,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testValidateLeagueWhenSeasonIdIsEmpty() {
+    public void validateLeague_whenSeasonIdIsEmpty_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.SEASON_ID_IS_NULL.name());
         league = getValidLeague();
@@ -112,7 +113,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testValidateLeagueWhenAdminIdIsNull() {
+    public void validateLeague_whenAdminIdIsNull_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.ADMIN_NOT_FOUND.name());
         league = getValidLeague();
@@ -121,7 +122,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testValidateLeagueWhenAdminIdIsEmpty() {
+    public void validateLeague_whenAdminIdIsEmpty_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.ADMIN_NOT_FOUND.name());
         league = getValidLeague();
@@ -130,7 +131,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testAddPlayerToLeagueSuccess() {
+    public void addPlayerToLeague_withValidPlayerLeague_success() {
         league = getValidLeague();
         playerLeague = getValidPlayerLeague(league);
         when(playerLeagueRepositoryMock.save((PlayerLeague) anyObject())).thenReturn(playerLeague);
@@ -142,7 +143,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testCreateLeagueSuccess() {
+    public void createLeague_withValidInput_success() {
         league = getValidLeague();
         playerLeague = getValidPlayerLeague(league);
         when(playerLeagueRepositoryMock.save((PlayerLeague) anyObject())).thenReturn(playerLeague);
@@ -151,19 +152,21 @@ public class LeagueServiceTest {
         assertEquals(league.getId(), LEAGUE_ID);
         assertEquals(league.getLeagueName(), LEAGUE_NAME);
         assertEquals(league.getPassword(), PASSWORD);
+        verify(leagueRepositoryMock).save(league);
     }
 
     @Test
-    public void testUpdateLeagueWhenLeagueNotFound() {
+    public void updateLeague_whenLeagueNotFound_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.LEAGUE_NOT_FOUND.name());
         league = getValidLeague();
         when(leagueRepositoryMock.getOne(anyString())).thenReturn(null);
         leagueService.updateLeague(league);
+        verify(leagueRepositoryMock).save(league);
     }
 
     @Test
-    public void testUpdateLeagueSuccess() {
+    public void updateLeague_whenValidInput_success() {
         league = getValidLeague();
         when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
         when(leagueRepositoryMock.save((League) anyObject())).thenReturn(league);
@@ -171,51 +174,58 @@ public class LeagueServiceTest {
         assertEquals(league.getId(), LEAGUE_ID);
         assertEquals(league.getLeagueName(), LEAGUE_NAME);
         assertEquals(league.getPassword(), PASSWORD);
+        verify(leagueRepositoryMock).save(league);
     }
 
     @Test
-    public void testGetLeaguesForPlayerWhenNoLeaguesAvailable() {
+    public void getLeaguesForPlayer_whenNoLeaguesAvailable_returnsEmptyList() {
         when(playerLeagueRepositoryMock.findIdLeagueIdsByIdPlayerId(anyString())).thenReturn(Arrays.asList());
         assertEquals(leagueService.getLeaguesForPlayer(PLAYER_ID).size(), 0);
+        verify(playerLeagueRepositoryMock).findIdLeagueIdsByIdPlayerId(PLAYER_ID);
     }
 
     @Test
-    public void testGetLeaguesForPlayerWhenMultipleLeaguesAvailable() {
+    public void getLeaguesForPlayer_whenLeaguesAvailable_returnsList() {
         when(playerLeagueRepositoryMock.findIdLeagueIdsByIdPlayerId(anyString())).thenReturn(Arrays.asList(LEAGUE_ID));
         league = getValidLeague();
         when(leagueRepositoryMock.findAll((Iterable<String>) anyObject())).thenReturn(Arrays.asList(league));
         Set<LeagueName> leagueNames = leagueService.getLeaguesForPlayer(PLAYER_ID);
         assertEquals(leagueNames.size(), 1);
         assertTrue(leagueNames.contains(new LeagueName(league)));
+        verify(playerLeagueRepositoryMock).findIdLeagueIdsByIdPlayerId(PLAYER_ID);
     }
 
     @Test
-    public void testGetPlayersInLeagueWhenNotExists() {
+    public void getPlayersInLeague_whenNoPlayerExists_returnsEmptyList() {
         when(playerLeagueRepositoryMock.findIdPlayerIdsByIdLeagueId(anyString())).thenReturn(Arrays.asList());
         assertEquals(leagueService.getPlayersInLeague(LEAGUE_ID).size(), 0);
+        verify(playerLeagueRepositoryMock).findIdPlayerIdsByIdLeagueId(LEAGUE_ID);
     }
 
     @Test
-    public void testGetPlayersInLeagueWhenExists() {
+    public void getPlayersInLeague_whenPlayerExists_returnsList() {
         when(playerLeagueRepositoryMock.findIdPlayerIdsByIdLeagueId(anyString())).thenReturn(Arrays.asList(PLAYER_ID));
         Set<String> playerIds = leagueService.getPlayersInLeague(LEAGUE_ID);
         assertEquals(playerIds.size(), 1);
         assertTrue(playerIds.contains(PLAYER_ID));
+        verify(playerLeagueRepositoryMock).findIdPlayerIdsByIdLeagueId(LEAGUE_ID);
     }
 
     @Test
-    public void testJoinLeagueWhenLeagueIdNull() {
+    public void joinLeague_whenLeagueIdNull_success() {
         league = getValidLeague();
         when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(league);
         when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
         playerLeague = getValidPlayerLeague(league);
         playerLeague.setLeagueId(null);
         leagueService.joinLeague(playerLeague);
+        verify(leagueRepositoryMock).findOne(league.getId());
+        verify(leagueRepositoryMock).findByLeagueName(league.getLeagueName());
     }
 
 
     @Test
-    public void testJoinLeagueWhenLeagueIdNameNull() {
+    public void joinLeague_whenLeagueIdNameNull_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.LEAGUE_NOT_FOUND.name());
         playerLeague = getValidPlayerLeague(getValidLeague());
@@ -225,7 +235,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testJoinLeagueWhenLeagueIdNullNameNotNull() {
+    public void joinLeague_whenLeagueIdNullNameNotNull_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.LEAGUE_NOT_FOUND.name());
         when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(null);
@@ -235,7 +245,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testJoinLeagueWhenLeagueIdNullNameNotNullLeagueByLeagueNameNotNull() {
+    public void joinLeague_whenLeagueIdNullNameNotNullLeagueByLeagueNameNotNull_throwsLeagueValidationException() {
         league = getValidLeague();
         when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(league);
         playerLeague = getValidPlayerLeague(getValidLeague());
@@ -246,14 +256,14 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testJoinLeagueWhenLeagueNotFound() {
+    public void joinLeague_whenLeagueNotFound_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.LEAGUE_NOT_FOUND.name());
         leagueService.joinLeague(LEAGUE_ID, PLAYER_ID, PASSWORD);
     }
 
     @Test
-    public void testJoinLeagueWhenLeaguePasswordIsInvalid() {
+    public void joinLeague_whenLeaguePasswordIsInvalid_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.INVALID_LEAGUE_PASSWORD.name());
         league = getValidLeague();
@@ -263,57 +273,67 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testInnerJoinLeagueSuccess() {
+    public void innerJoinLeague_whenValidInput_success() {
         league = getValidLeague();
         when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
         leagueService.joinLeague(LEAGUE_ID, PLAYER_ID, PASSWORD);
+        verify(leagueRepositoryMock).findOne(league.getId());
     }
 
     @Test
-    public void testJoinLeagueSuccess() {
+    public void joinLeague_whenValidInput_success() {
         league = getValidLeague();
         when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(league);
         when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
         playerLeague = getValidPlayerLeague(league);
         leagueService.joinLeague(playerLeague);
+        verify(leagueRepositoryMock).findOne(league.getId());
     }
 
     @Test
-    public void testGetLeagueByIdSuccess() {
+    public void getLeagueById_whenValidLeagueId_success() {
         league = getValidLeague();
         when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
-        assertEquals(league.getId(), LEAGUE_ID);
-        assertEquals(league.getLeagueName(), LEAGUE_NAME);
-        assertEquals(league.getPassword(), PASSWORD);
+        final League result = leagueService.getLeagueById(LEAGUE_ID);
+        assertEquals(result.getId(), LEAGUE_ID);
+        assertEquals(result.getLeagueName(), LEAGUE_NAME);
+        assertEquals(result.getPassword(), PASSWORD);
+        verify(leagueRepositoryMock).findOne(LEAGUE_ID);
     }
 
     @Test
-    public void testGetLeagueByNameSuccess() {
+    public void getLeagueByName_whenValidLeagueName_success() {
         league = getValidLeague();
         when(leagueRepositoryMock.findByLeagueName(anyString())).thenReturn(league);
-        assertEquals(league.getId(), LEAGUE_ID);
-        assertEquals(league.getLeagueName(), LEAGUE_NAME);
-        assertEquals(league.getPassword(), PASSWORD);
+        final League result = leagueService.getLeagueByName(LEAGUE_NAME);
+        assertEquals(result.getId(), LEAGUE_ID);
+        assertEquals(result.getLeagueName(), LEAGUE_NAME);
+        assertEquals(result.getPassword(), PASSWORD);
+        verify(leagueRepositoryMock).findByLeagueName(LEAGUE_NAME);
     }
 
     @Test
-    public void testRemovePlayerFromLeagueWhenLeagueNotFound() {
+    public void removePlayerFromLeague_whenLeagueNotFound_throwsLeagueValidationException() {
         expectedEx.expect(LeagueValidationException.class);
         expectedEx.expectMessage(LeagueValidationException.LeagueExceptions.LEAGUE_NOT_FOUND.name());
         when(leagueRepositoryMock.findOne(anyString())).thenReturn(null);
         leagueService.removePlayerFromLeague(LEAGUE_ID, PLAYER_ID);
+        verify(leagueRepositoryMock).findOne(LEAGUE_ID);
     }
 
     @Test
-    public void testRemovePlayerFromLeagueSuccess() {
+    public void removePlayerFromLeague_whenValidInput_success() {
         league = getValidLeague();
+        playerLeague = getValidPlayerLeague(league);
         when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
-        when(playerLeagueRepositoryMock.findByIdLeagueIdAndIdPlayerId(anyString(), anyString())).thenReturn(getValidPlayerLeague(league));
+        when(playerLeagueRepositoryMock.findByIdLeagueIdAndIdPlayerId(anyString(), anyString())).thenReturn(playerLeague);
         leagueService.removePlayerFromLeague(LEAGUE_ID, PLAYER_ID);
+        verify(leagueRepositoryMock).findOne(LEAGUE_ID);
+        verify(playerLeagueRepositoryMock).delete(playerLeague);
     }
 
     @Test
-    public void testGetAllLeaguesWhenEmpty() {
+    public void getAllLeagues_whenNoLeaguesPresent_returnsEmptyList() {
         when(leagueRepositoryMock.findAll()).thenReturn(Arrays.asList());
         Iterable<League> allLeagues = leagueService.getAllLeagues();
         int count = 0;
@@ -324,7 +344,7 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testGetAllLeaguesWhenNotEmpty() {
+    public void getAllLeagues_whenLeaguesPresent_returnsList() {
         league = getValidLeague();
         when(leagueRepositoryMock.findAll()).thenReturn(Arrays.asList(league));
         Iterable<League> allLeagues = leagueService.getAllLeagues();
@@ -339,25 +359,28 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void testDeleteLeagueSuccess() {
+    public void deleteLeague_whenValidLeagueId_success() {
         when(playerLeagueRepositoryMock.findIdPlayerIdsByIdLeagueId(anyString())).thenReturn(Arrays.asList(PLAYER_ID));
         Mockito.doNothing().when(leagueRepositoryMock).delete(anyString());
         leagueService.deleteLeague(LEAGUE_ID);
+        verify(leagueRepositoryMock).delete(LEAGUE_ID);
     }
 
     @Test
-    public void testGetLeagueBySeasonIdWhenEmpty() {
+    public void getLeagueBySeasonId_whenNoLeaguesPresent_returnsEmptyList() {
         when(leagueRepositoryMock.findLeagueBySeasonId(anyString())).thenReturn(Arrays.asList());
         assertEquals(leagueService.getLeagueBySeasonId(SEASON_ID).size(), 0);
+        verify(leagueRepositoryMock).findLeagueBySeasonId(SEASON_ID);
     }
 
     @Test
-    public void testGetLeagueBySeasonIdWhenNotEmpty() {
+    public void getLeagueBySeasonId_whenLeaguesPresent_returnsList() {
         league = getValidLeague();
         when(leagueRepositoryMock.findLeagueBySeasonId(anyString())).thenReturn(Arrays.asList(league));
         List<League> leagues = leagueService.getLeagueBySeasonId(SEASON_ID);
         assertEquals(leagues.size(), 1);
         assertTrue(leagues.contains(league));
+        verify(leagueRepositoryMock).findLeagueBySeasonId(SEASON_ID);
     }
 
     private League getValidLeague() {
