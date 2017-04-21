@@ -95,6 +95,7 @@ public class LeagueServiceTest {
 
     @Test
     public void createLeague_ExpectsLeagueToBeCreated() {
+
         final LeagueBuilder leagueBuilder = new LeagueBuilder();
         final League league = leagueBuilder.withName("testname")
                 .withAdminId("1")
@@ -117,6 +118,7 @@ public class LeagueServiceTest {
 
     @Test
     public void joinLeague_WhenLeagueIdNull_ThrowsLeagueValidationException() {
+
         expectedException.expect(LeagueValidationException.class);
         expectedException.expectMessage("LEAGUE_NOT_FOUND");
 
@@ -128,6 +130,7 @@ public class LeagueServiceTest {
 
     @Test
     public void joinLeague_WhenLeagueNameNotFound_ThrowsLeagueValidationException() {
+
         expectedException.expect(LeagueValidationException.class);
         expectedException.expectMessage("LEAGUE_NOT_FOUND");
 
@@ -219,7 +222,6 @@ public class LeagueServiceTest {
 
     @Test
     public void removePlayerFromLeague_WhenLeagueIdExists_RemovesPlayer() {
-
 
         final LeagueBuilder leagueBuilder = new LeagueBuilder();
         final League league = leagueBuilder.withName("testname")
