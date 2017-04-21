@@ -12,6 +12,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.SpringApplicationConfiguration;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -190,7 +192,8 @@ public class LeagueServiceTest {
                 .withSeasonId("1")
                 .withPassword("test")
                 .build();
-        List<League> leagues = new ArrayList<>();
+
+        final List<League> leagues = new ArrayList<>();
 
         leagues.add(league);
 
@@ -202,6 +205,15 @@ public class LeagueServiceTest {
 
         verify(playerLeagueRepositoryMock).findIdLeagueIdsByIdPlayerId("1");
         verify(leagueRepositoryMock).findAll(leagueIds);
+    }
+
+    @Test
+    public void removePlayerFromLeague_WhenLeagueIdNotExist_ThroesLeagueValidationException() {
+
+        expectedException.expect(LeagueValidationException.class);
+        expectedException.expectMessage("LEAGUE_NOT_FOUND");
+        when(leagueRepositoryMock.findOne(anyString())).thenReturn(null);
+        leagueService.removePlayerFromLeague("1", "1");
     }
 
 
