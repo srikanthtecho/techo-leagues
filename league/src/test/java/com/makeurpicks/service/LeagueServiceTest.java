@@ -217,6 +217,26 @@ public class LeagueServiceTest {
     }
 
 
+    @Test
+    public void removePlayerFromLeague_WhenLeagueIdExists_RemovesPlayer() {
+
+
+        final LeagueBuilder leagueBuilder = new LeagueBuilder();
+        final League league = leagueBuilder.withName("testname")
+                .withAdminId("1")
+                .withSeasonId("1")
+                .withPassword("test")
+                .build();
+
+        PlayerLeague playerLeague = createPlayerLeague();
+        when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
+        when(playerLeagueRepositoryMock.findByIdLeagueIdAndIdPlayerId(anyString(), anyString())).thenReturn(playerLeague);
+
+        leagueService.removePlayerFromLeague("1", "1");
+
+        verify(playerLeagueRepositoryMock).delete(playerLeague);
+    }
+
     /**
      * Builds and returns dummy {@code PlayerLeague}
      *
