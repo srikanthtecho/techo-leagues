@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -128,6 +131,8 @@ public class LeagueServiceTest {
         leagueService.joinLeague(playerLeague);
     }
 
+
+
     @Test
     public void joinLeague_WhenLeagueNameNotFound_ThrowsLeagueValidationException() {
 
@@ -143,7 +148,30 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void updateLeague_WhenLeagueIDNull_ThrowsLeagueValidationException() {
+    public void joinLeague_ExpectsPlayerToBeAddedToLeague() {
+
+        final LeagueBuilder leagueBuilder = new LeagueBuilder();
+        final League league = leagueBuilder.withName("test name")
+                .withAdminId("1")
+                .withSeasonId("1")
+                .withPassword("test")
+                .build();
+
+        when(leagueRepositoryMock.findByLeagueName("test name")).thenReturn(league);
+        when(playerLeagueRepositoryMock.save(any(PlayerLeague.class))).thenReturn(createPlayerLeague());
+        when(leagueRepositoryMock.findOne(anyString())).thenReturn(league);
+
+        final PlayerLeague playerLeague = createPlayerLeague();
+        leagueService.joinLeague(playerLeague);
+
+        verify(leagueRepositoryMock).findOne("1");
+        verify(playerLeagueRepositoryMock).save(any(PlayerLeague.class));
+
+    }
+
+    @Test
+    public void updateLeague_WhenLeagueIdNull_ThrowsLeagueValidationException() {
+
         expectedException.expect(LeagueValidationException.class);
         expectedException.expectMessage("LEAGUE_NOT_FOUND");
 
@@ -211,7 +239,25 @@ public class LeagueServiceTest {
     }
 
     @Test
-    public void removePlayerFromLeague_WhenLeagueIdNotExist_ThroesLeagueValidationException() {
+    public void addPlayerToLeague_ExpectsPlayerToBeAdded() {
+
+        final LeagueBuilder leagueBuilder = new LeagueBuilder();
+        final League league = leagueBuilder.withName("testname")
+                .withAdminId("1")
+                .withSeasonId("1")
+                .withPassword("test")
+                .build();
+
+        when(playerLeagueRepositoryMock.save(any(PlayerLeague.class))).thenReturn(createPlayerLeague());
+        PlayerLeague playerLeague = leagueService.addPlayerToLeague(league, "1");
+
+        assertNotNull(playerLeague);
+
+        verify(playerLeagueRepositoryMock).save(any(PlayerLeague.class));
+    }
+
+    @Test
+    public void removePlayerFromLeague_WhenLeagueIdNotExist_ThroewsLeagueValidationException() {
 
         expectedException.expect(LeagueValidationException.class);
         expectedException.expectMessage("LEAGUE_NOT_FOUND");
@@ -250,7 +296,7 @@ public class LeagueServiceTest {
         final PlayerLeague playerLeague = new PlayerLeague(new PlayerLeagueId("1", "1"));
         playerLeague.setLeagueId("1");
         playerLeague.setLeagueName("test name");
-        playerLeague.setPassword("123");
+        playerLeague.setPassword("test");
         playerLeague.setPlayerId("1");
 
         return playerLeague;
