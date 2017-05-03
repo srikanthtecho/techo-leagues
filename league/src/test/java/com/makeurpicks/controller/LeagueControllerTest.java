@@ -2,6 +2,8 @@ package com.makeurpicks.controller;
 
 import com.google.gson.Gson;
 import com.makeurpicks.domain.League;
+import com.makeurpicks.domain.PlayerLeague;
+import com.makeurpicks.domain.PlayerLeagueId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
@@ -52,6 +55,7 @@ public class LeagueControllerTest {
     private Gson gson = new Gson();
 
     private League league;
+
 
     @Autowired
     private WebApplicationContext wac;
@@ -136,7 +140,6 @@ public class LeagueControllerTest {
         this.mockMvc.perform(get("/seasons/{seasonId}", "1"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(LEAGUES_DATA));
-
     }
 
     @Test
@@ -225,7 +228,7 @@ public class LeagueControllerTest {
     @SqlGroup({
             @Sql(scripts = "/insert-league-data.sql", executionPhase = BEFORE_TEST_METHOD),
     })
-    public void givenDeleteLeagueUriWithId_whenIdExists_ExpectsLeagueToBeDeleted() throws Exception {
+    public void givenDeleteLeagueUriWithId_whenIdExists_thenVerifyResponseOk() throws Exception {
 
         this.mockMvc.perform(delete("/{id}", "1")
                 .contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -233,5 +236,21 @@ public class LeagueControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE));
     }
 
+    @Test
+    @SqlGroup({
+            @Sql(scripts = "/insert-league-data.sql", executionPhase = BEFORE_TEST_METHOD),
+            @Sql(scripts = "/insert-player-data.sql", executionPhase = BEFORE_TEST_METHOD),
+            @Sql(scripts = "/delete-league-data.sql", executionPhase = AFTER_TEST_METHOD)
+    })
+    public void givenDeletePlayerLeagueUriWithId_whenIdExists_thenVerifyResponseOk() throws Exception {
+
+        final PlayerLeagueId playerLeagueId = new PlayerLeagueId("1", "1");
+        final PlayerLeague playerLeague =  new PlayerLeague(playerLeagueId);
+
+        this.mockMvc.perform(delete("/player")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(gson.toJson(playerLeague)))
+                .andExpect(status().isOk());
+    }
 
 }
